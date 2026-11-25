@@ -6,8 +6,7 @@ if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString
     throw 'This script packages the Windows x64 build.'
 }
 if (!$Version) {
-    [xml]$manifest = Get-Content AndroidManifest.xml -Raw
-    $Version = $manifest.DocumentElement.GetAttribute('versionName','http://schemas.android.com/apk/res/android')
+    $Version = (Get-Content -LiteralPath 'desktop/VERSION' -Raw).Trim()
 }
 
 function Invoke-Checked {
