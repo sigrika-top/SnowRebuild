@@ -26,7 +26,18 @@ final class NoProgressRegression {
                 && route.steps().get(0).mode()==Solver.Mode.MOVE
                 && route.steps().get(1).mode()==Solver.Mode.COLLECT
                 && route.steps().get(2).mode()==Solver.Mode.COMBO, "Unneeded collection can start a productive combo");
-        System.out.println("Round 5 and COMBO regressions passed");
+
+        var sealedFrame = ImageIO.read(Path.of(args[1]).toFile());
+        width = sealedFrame.getWidth();
+        height = sealedFrame.getHeight();
+        var sealed = reader.read(sealedFrame.getRGB(0,0,width,height,null,0,width),width,height);
+        require(Arrays.equals(sealed.cards(),new int[]{2,3,3,3,4,5,5}), "Hand on sealed tile");
+        require(sealed.position()==7 && sealed.tiles()[7].yield()==0, "Current tile remains sealed");
+        require(sealed.tiles()[3].material()==0 && sealed.tiles()[3].yield()==7, "Open ore tile yields seven");
+        var escape = Solver.solve(sealed);
+        require(escape.points()==2 && !escape.steps().isEmpty()
+                && escape.steps().get(0).mode()==Solver.Mode.MOVE, "Can move from a sealed tile and score");
+        System.out.println("Round 5, COMBO and sealed-tile regressions passed: " + escape.steps());
     }
 
     private static void require(boolean condition, String name) {

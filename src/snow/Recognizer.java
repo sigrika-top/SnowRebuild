@@ -152,15 +152,9 @@ final class Recognizer {
             if (shownYield < 0) throw new IllegalArgumentException("请取消选牌，让当前位置的光柱完整露出。");
         }
         if (shownYield < 0 && (layout == -1 || layout >= 6)) shownYield = readYield(screen,tiles[position]);
-        int base = layout < 4 ? 2 : layout < 6 ? 3 : 5;
         boolean anyBlocked = false;
         for (boolean locked : blocked) anyBlocked |= locked;
-        if (layout == -1 && shownYield <= 0) throw new IllegalArgumentException("新棋盘的格子产量读不清。");
-        if (layout >= 0 && layout < 4 && anyBlocked) base += 2;
-        if (shownYield > 0 && (layout == -1 || layout < 4 && !anyBlocked || layout >= 6 && anyBlocked)) base = shownYield;
-        if (layout >= 6 && anyBlocked && shownYield <= 0) {
-            throw new IllegalArgumentException("当前位置被封锁，无法确认本回合的产量。");
-        }
+        int base = openTileYield(tiles, layout, anyBlocked, blocked[position], shownYield);
         Solver.Tile[] board = new Solver.Tile[10];
         for (int i = 0; i < board.length; i++) {
             boolean bonus = layout == 0 && !anyBlocked && blue[i];
@@ -168,6 +162,22 @@ final class Recognizer {
                     layout == 4 && blue[i]);
         }
         return new Solver.Board(board, position, hand, plans);
+    }
+
+    private int openTileYield(Match[] tiles, int layout, boolean anyBlocked,
+                              boolean currentBlocked, int shownYield) {
+        if (anyBlocked) {
+            if (!currentBlocked && (shownYield == 4 || shownYield == 7)) return shownYield;
+            for (Match tile : tiles) {
+                if (tile.type == 3 || tile.type == 4) return 7;
+            }
+            return layout >= 6 ? 7 : 4;
+        }
+        if (layout == -1 && shownYield <= 0) {
+            throw new IllegalArgumentException("新棋盘的格子产量读不清。");
+        }
+        if (layout < 4 && shownYield > 0) return shownYield;
+        return layout < 4 ? 2 : layout < 6 ? 3 : 5;
     }
 
     private int readYield(Screen s, Match tile) {
